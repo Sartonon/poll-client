@@ -30,33 +30,45 @@ class App extends Component {
   }
 
   getPastMessages = async () => {
-    const { data } = await axios.get("http://localhost:3001/messages");
+    const { data } = await axios.get("http://localhost:3000/messages");
     this.setState({ messages: data });
+  };
+
+  getId = () => {
+    if (this.state.messages.length > 0) {
+      console.log(this.state.messages);
+      return this.state.messages[this.state.messages.length - 1].id;
+    }
+
+    return null;
   };
 
   getMessages = async () => {
     try {
-      const { data } = await axios.get("http://localhost:30001/messages");
+      const { data } = await axios.get(`http://localhost:3000/messages?id=${this.getId()}`);
       this.handleMessage(data);
       console.log(data);
-      this.getMessages();
+      setTimeout(() => {
+        this.getMessages();
+      }, 5000);
     } catch (err) {
       console.log("error: ", err);
     }
   };
 
-  sendMessage = (e) => {
+  sendMessage = async (e) => {
     e.preventDefault();
-    axios.post("http://localhost:30001/messages", {
+    const { data } = await axios.post("http://localhost:3000/messages", {
       name: this.state.username,
       message: this.state.message,
       color: this.state.color,
     });
-    this.setState({ message: "" });
+    console.log(data);
+    this.setState({ message: "", messages: [ ...this.state.messages, data ] });
   };
 
   handleMessage = data => {
-    this.setState({ messages: [ ...this.state.messages, data ] });
+    this.setState({ messages: [ ...this.state.messages, ...data ] });
     setTimeout(() => {
       const objDiv = document.getElementById("chatwindow");
       if (objDiv) {
