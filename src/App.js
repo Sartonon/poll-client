@@ -30,7 +30,7 @@ class App extends Component {
   }
 
   getPastMessages = async () => {
-    const { data } = await axios.get("http://poll.sartonon.fi/messages");
+    const { data } = await axios.get("http://poll.sartonon.fi/api/messages");
     this.setState({ messages: data });
   };
 
@@ -45,7 +45,7 @@ class App extends Component {
 
   getMessages = async () => {
     try {
-      const { data } = await axios.get(`http://poll.sartonon.fi/messages?id=${this.getId()}`);
+      const { data } = await axios.get(`http://poll.sartonon.fi/api/messages?id=${this.getId()}`);
       this.handleMessage(data);
       console.log(data);
       setTimeout(() => {
@@ -58,7 +58,7 @@ class App extends Component {
 
   sendMessage = async (e) => {
     e.preventDefault();
-    const { data } = await axios.post("http://poll.sartonon.fi/messages", {
+    const { data } = await axios.post("http://poll.sartonon.fi/api/messages", {
       name: this.state.username,
       message: this.state.message,
       color: this.state.color,
