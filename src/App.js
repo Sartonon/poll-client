@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import './App.css';
 
+const fetchInterval = 80;
+
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
@@ -9,14 +11,15 @@ function getRandomInt(max) {
 class App extends Component {
   state = {
     messages: [],
+    displayMessages: [],
     username: "",
     usernameConfirmed: false,
     message: "",
-    color: 0,
+    color: 'green',
   };
 
   async componentDidMount() {
-    await this.getPastMessages();
+    // await this.getPastMessages();
     this.getMessages();
   }
 
@@ -27,6 +30,10 @@ class App extends Component {
         objDiv.scrollTop = objDiv.scrollHeight;
       }
     }
+
+    if (this.state.displayMessages.length > 20) {
+      this.setState({ displayMessages: [] });
+    }
   }
 
   getPastMessages = async () => {
@@ -36,7 +43,6 @@ class App extends Component {
 
   getId = () => {
     if (this.state.messages.length > 0) {
-      console.log(this.state.messages);
       return this.state.messages[this.state.messages.length - 1].id;
     }
 
@@ -47,10 +53,9 @@ class App extends Component {
     try {
       const { data } = await axios.get(`http://poll.sartonon.fi/api/messages?id=${this.getId()}`);
       this.handleMessage(data);
-      console.log(data);
       setTimeout(() => {
         this.getMessages();
-      }, 5000);
+      }, fetchInterval);
     } catch (err) {
       console.log("error: ", err);
     }
@@ -63,12 +68,12 @@ class App extends Component {
       message: this.state.message,
       color: this.state.color,
     });
-    console.log(data);
-    this.setState({ message: "", messages: [ ...this.state.messages, data ] });
+    // console.log(data);
+    // this.setState({ message: "", messages: [ ...this.state.messages, data ] });
   };
 
   handleMessage = data => {
-    this.setState({ messages: [ ...this.state.messages, ...data ] });
+    this.setState({ messages: [ ...this.state.messages, ...data ], displayMessages: [ ...this.state.displayMessages, ...data ] });
     setTimeout(() => {
       const objDiv = document.getElementById("chatwindow");
       if (objDiv) {
@@ -84,7 +89,7 @@ class App extends Component {
   confirmUsername = () => {
     this.setState({
       usernameConfirmed: true,
-      color: `rgb(${getRandomInt(255)}, ${getRandomInt(255)}, ${getRandomInt(255)})`,
+      color: `green`,
     });
   };
 
@@ -92,8 +97,19 @@ class App extends Component {
     this.setState({ message: e.target.value });
   };
 
+  startSending = () => {
+    if (this.messageInterval) clearInterval(this.messageInterval);
+    this.messageInterval = setInterval(() => {
+      axios.post("http://poll.sartonon.fi/api/messages", {
+        name: 'Santeri',
+        message: 'Moikka!',
+        color: 'green',
+      });
+    }, this.state.interval || 1000);
+  };
+
   renderMessages = () => {
-    return this.state.messages.map((message, i) => {
+    return this.state.displayMessages.map((message, i) => {
       return (
         <div className="Message-wrapper" key={i}>
           <div className="Message-block" key={i} style={{ float: message.name === this.state.username ? "right" : "left" }}>
@@ -112,6 +128,8 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <h1 className="App-title">Chat</h1>
+          <button onClick={this.startSending}>Laheta</button>
+          <input onChange={e => this.setState({ interval: e.target.value })} />
         </header>
         {!usernameConfirmed ?
           <div className="Login-div">
