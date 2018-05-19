@@ -20,7 +20,6 @@ class App extends Component {
 
   async componentDidMount() {
     // await this.getPastMessages();
-    this.getMessages();
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -91,6 +90,7 @@ class App extends Component {
       usernameConfirmed: true,
       color: `green`,
     });
+    this.getMessages();
   };
 
   handleMessageChange = (e) => {
