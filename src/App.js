@@ -49,13 +49,20 @@ class App extends Component {
     return null;
   };
 
-  getMessages = async () => {
+  getMessages = async (interval) => {
     try {
       const { data } = await axios.get(`http://poll.sartonon.fi/api/messages?id=${this.getId()}`);
       this.handleMessage(data);
-      setTimeout(() => {
-        this.getMessages();
-      }, fetchInterval);
+      if (this.newInterval) {
+        console.log(this.newInterval);
+        const newInterval = this.newInterval;
+        this.newInterval = null;
+        this.getMessages(newInterval);
+      } else {
+        this.interval = setTimeout(() => {
+          this.getMessages(interval);
+        }, interval || fetchInterval);
+      }
     } catch (err) {
       console.log("error: ", err);
     }
@@ -68,15 +75,28 @@ class App extends Component {
       message: this.state.message,
       color: this.state.color,
     });
+    this.setState({ message: "" });
     // console.log(data);
     // this.setState({ message: "", messages: [ ...this.state.messages, data ] });
   };
 
+  findCommand = (messages) => {
+    let commandMessage = null;
+    messages.forEach(message => {
+      if (message.message[0] === "#") {
+        commandMessage = message.message;
+      }
+    });
+
+    return commandMessage;
+  }
+
   handleCommand = data => {
     console.log(data);
     if (!data[0]) return;
-    if (data[0].message[0] === "#") {
-      const splittedMessage = data[0].message.split('::');
+    const commandMessage = this.findCommand(data);
+    if (commandMessage && commandMessage[0] === "#") {
+      const splittedMessage = commandMessage.split('::');
       const command = splittedMessage[0];
       if (command === "#open") {
         window.open(splittedMessage[1], "_self");
@@ -96,6 +116,14 @@ class App extends Component {
             color: "green"
           });
         }, interval || 1000);
+      } else if (command === "#interval") {
+        console.log("interval");
+        const interval = splittedMessage[1];
+        if (this.interval) {
+          this.newInterval = interval;
+        } else {
+
+        }
       }
     }
   }
